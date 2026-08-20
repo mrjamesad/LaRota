@@ -14,6 +14,7 @@ haritada canlandırır ve 1080×1920 bir MP4 çıkarır. Telefondan da çalış�
 - Sabit / yumuşak / hareketli kamera
 - 10–120 saniye arası süre
 - Üstte kayan ay ve biriken kilometre sayacı
+- İlerleyen işaret ulaşım türünü gösterir: yürüme, bisiklet, araba, otobüs, tren, uçak, feribot
 
 ## Nasıl kullanılır
 
@@ -49,7 +50,10 @@ Bu proje [mahlernim/google-timeline-visualizer](https://github.com/mahlernim/goo
   dönüşmüyor. Ekran uzayında sadeleştirme GPS titremesini temizliyor.
 - **Dikey 1080×1920 çıktı**, retina harita karoları ve kareye sığacak en küçük AVC
   seviyesini seçen kodlayıcı pazarlığı.
-- Koyu harita ve koyu arayüz.
+- **Ulaşım türü işareti.** Dışa aktarımdaki `activity` kaydında yürüme / araba /
+  uçak gibi bir tür var; ilerleyen nokta bunu ikon olarak gösteriyor, alt satır da
+  adını yazıyor. Duraklarda son bilinen tür korunuyor.
+- Voyager altlığı ve koyu arayüz.
 
 ## Lisans
 

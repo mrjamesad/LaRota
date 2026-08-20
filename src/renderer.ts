@@ -7,6 +7,7 @@ import {
   worldPositionAtProgress,
 } from './camera';
 import { cumulativeDistances, overviewRouteSegments, project, unwrapWorldPoints } from './geo';
+import { drawModeGlyph } from './glyph';
 import { journeySubtitle } from './label';
 import { buildPacingCurve } from './pacing';
 import { buildSimplificationLadder, indicesForTolerance } from './simplify';
@@ -20,22 +21,24 @@ import type {
   WorldPoint,
 } from './types';
 
-const TILE_TEMPLATE = 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
+const TILE_TEMPLATE = 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
 
 /**
- * The video's palette. Kept together so the whole look moves with one edit, and
- * matched to the dark basemap: its land is #262626 and its water #090909, so the
- * trail needs a high-chroma hue and the head marker a light core to stay visible.
+ * The video's palette, kept together so the whole look moves with one edit. Tuned
+ * for the Voyager basemap — warm off-white land (#fbf8f3), pale blue water
+ * (#d5e8eb), pale green vegetation (#edf2e3) — so the trail takes the one hue none
+ * of those occupy.
  */
 const THEME = {
-  voidFill: '#0b0d0e',
-  trail: '#22d3ee',
-  headCore: '#f2fbfd',
-  headGlow: 'rgba(34, 211, 238, 0.55)',
-  card: 'rgba(16, 20, 24, 0.82)',
-  cardEdge: 'rgba(255, 255, 255, 0.10)',
-  title: '#f1f5f8',
-  subtitle: '#9fb0bb',
+  voidFill: '#f6f3ee',
+  trail: '#e5006e',
+  headRing: '#ffffff',
+  headShadow: 'rgba(32, 20, 28, 0.30)',
+  glyph: '#ffffff',
+  card: 'rgba(255, 255, 255, 0.90)',
+  cardEdge: 'rgba(28, 26, 30, 0.10)',
+  title: '#1c1a1e',
+  subtitle: '#6e646a',
 } as const;
 
 function worldToCanvas(
@@ -380,18 +383,27 @@ export function drawFrame(
   );
   const [headX, headY] = worldToCanvas(current.point, viewport, width, height);
 
-  context.shadowColor = THEME.headGlow;
-  context.shadowBlur = 10 * strokeScale;
-  context.fillStyle = THEME.headCore;
+  // A white ring lifts the marker off the map; the disc carries the mode mark.
+  context.shadowColor = THEME.headShadow;
+  context.shadowBlur = 12 * strokeScale;
+  context.fillStyle = THEME.headRing;
   context.beginPath();
-  context.arc(headX, headY, 10 * strokeScale, 0, Math.PI * 2);
+  context.arc(headX, headY, 20 * strokeScale, 0, Math.PI * 2);
   context.fill();
   context.shadowBlur = 0;
-  context.strokeStyle = THEME.trail;
-  context.lineWidth = 5 * strokeScale;
+  context.fillStyle = THEME.trail;
   context.beginPath();
-  context.arc(headX, headY, 16 * strokeScale, 0, Math.PI * 2);
-  context.stroke();
+  context.arc(headX, headY, 16.5 * strokeScale, 0, Math.PI * 2);
+  context.fill();
+  drawModeGlyph(
+    context,
+    journey.points[current.completedIndex]?.mode,
+    headX,
+    headY,
+    21 * strokeScale,
+    THEME.glyph,
+    THEME.trail,
+  );
   context.restore();
 
   if (frame.outroProgress > 0) {

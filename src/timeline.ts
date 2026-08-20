@@ -1,3 +1,5 @@
+import { normaliseTravelMode } from './travel';
+import type { TravelMode } from './travel';
 import type { GeoPoint, MonthOption } from './types';
 import { haversineKm } from './geo';
 
@@ -110,7 +112,12 @@ function parseOffsetInstant(startValue: unknown, endValue: unknown, offsetValue:
   return instant;
 }
 
-function addPoint(output: GeoPoint[], time: unknown, coordinate: unknown): boolean {
+function addPoint(
+  output: GeoPoint[],
+  time: unknown,
+  coordinate: unknown,
+  mode?: TravelMode,
+): boolean {
   const parsedTime = parseInstant(time);
   const parsed = parseCoordinate(coordinate);
   if (!parsedTime || !parsed) return false;
@@ -120,6 +127,7 @@ function addPoint(output: GeoPoint[], time: unknown, coordinate: unknown): boole
     longitude: parsed[1],
     recordedDate: parsedTime.recordedDate,
     timeZoneMissing: parsedTime.timeZoneMissing,
+    mode,
   });
   return true;
 }
@@ -214,9 +222,13 @@ export function parseTimelineJson(data: unknown): GeoPoint[] {
     const segmentPoints: GeoPoint[] = [];
     let semanticPointAdded = false;
     const hasPath = Array.isArray(rawSegment.timelinePath);
+    const segmentMode = isObject(rawSegment.activity) && isObject(rawSegment.activity.topCandidate)
+      ? normaliseTravelMode(rawSegment.activity.topCandidate.type)
+      : undefined;
 
     if (isObject(rawSegment.activity)) {
-      semanticPointAdded = addPoint(segmentPoints, startTime, rawSegment.activity.start) || semanticPointAdded;
+      semanticPointAdded = addPoint(segmentPoints, startTime, rawSegment.activity.start, segmentMode)
+        || semanticPointAdded;
     }
 
     if (isObject(rawSegment.visit) && isObject(rawSegment.visit.topCandidate)) {
@@ -239,13 +251,15 @@ export function parseTimelineJson(data: unknown): GeoPoint[] {
             recordedDate: absolute?.recordedDate
               ?? (segmentStart?.timeZoneMissing ? offsetInstant?.toISOString().slice(0, 10) : undefined),
             timeZoneMissing: absolute?.timeZoneMissing ?? segmentStart?.timeZoneMissing ?? false,
+            mode: segmentMode,
           });
         }
       }
     }
 
     if (isObject(rawSegment.activity)) {
-      semanticPointAdded = addPoint(segmentPoints, endTime, rawSegment.activity.end) || semanticPointAdded;
+      semanticPointAdded = addPoint(segmentPoints, endTime, rawSegment.activity.end, segmentMode)
+        || semanticPointAdded;
     }
     if (segmentPoints.length > 0) {
       if (semanticPointAdded) {
@@ -277,6 +291,13 @@ export function parseTimelineJson(data: unknown): GeoPoint[] {
   const normalized = deduplicated.some((point) => point.timeZoneMissing)
     ? deduplicated
     : deduplicated.sort((a, b) => a.instant.getTime() - b.instant.getTime());
+  // A visit records no activity, so carry the last known mode forward: the marker
+  // should keep saying how you got here rather than blinking back to a bare dot.
+  let carried: TravelMode | undefined;
+  for (const point of normalized) {
+    if (point.mode && point.mode !== 'unknown') carried = point.mode;
+    else point.mode = carried;
+  }
   if (normalized.length === 0) {
     throw new TimelineParseError(
       'no-usable-locations',

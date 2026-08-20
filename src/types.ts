@@ -1,4 +1,5 @@
 import type { SimplificationLadder } from './simplify';
+import type { TravelMode } from './travel';
 import type { PacingCurve } from './pacing';
 
 export interface GeoPoint {
@@ -7,6 +8,7 @@ export interface GeoPoint {
   longitude: number;
   recordedDate?: string;
   timeZoneMissing?: boolean;
+  mode?: TravelMode;
 }
 
 export interface MonthOption {

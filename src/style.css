@@ -9,9 +9,9 @@
   --surface-raised: #1c2128;
   --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.16);
-  --accent: #22d3ee;
-  --accent-ink: #04222a;
-  --accent-soft: rgba(34, 211, 238, 0.12);
+  --accent: #ff2d87;
+  --accent-ink: #2b0014;
+  --accent-soft: rgba(255, 45, 135, 0.12);
   --danger: #ff8a8a;
 
   color: var(--ink);
@@ -34,8 +34,8 @@ body {
   min-height: 100svh;
   overscroll-behavior-y: none;
   background:
-    radial-gradient(120% 60% at 50% -10%, rgba(34, 211, 238, 0.15), transparent 62%),
-    radial-gradient(90% 55% at 100% 4%, rgba(56, 108, 255, 0.10), transparent 62%),
+    radial-gradient(120% 60% at 50% -10%, rgba(255, 45, 135, 0.15), transparent 62%),
+    radial-gradient(90% 55% at 100% 4%, rgba(120, 70, 255, 0.10), transparent 62%),
     var(--ground);
   background-attachment: fixed;
 }
