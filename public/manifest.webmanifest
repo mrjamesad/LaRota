@@ -1,0 +1,17 @@
+{
+  "name": "LaRota",
+  "short_name": "LaRota",
+  "description": "Konum geçmişinden hareketli bir yolculuk videosu üret.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0e1013",
+  "theme_color": "#0e1013",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

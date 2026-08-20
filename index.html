@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0e1013" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="LaRota" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Konum geçmişinden hareketli bir yolculuk videosu üret." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <title>LaRota</title>
+  </head>
+  <body>
+    <main class="shell">
+      <p id="preview-banner" class="preview-banner hidden">Deneme sürümü · Önce örnek veriyle dene</p>
+
+      <header class="topbar">
+        <span class="wordmark">La<em>Rota</em></span>
+        <span class="topbar-note">yerel · çevrimdışı</span>
+      </header>
+
+      <section class="hero">
+        <h1>Yıllarını<br />haritada izle.</h1>
+        <p class="lede">Konum geçmişini al, gittiğin her yeri sırayla çizen bir video çıkar.</p>
+      </section>
+
+      <section class="card step" aria-labelledby="source-heading">
+        <div class="step-head">
+          <span class="step-index">01</span>
+          <h2 id="source-heading">Konum dosyası</h2>
+        </div>
+        <p>Dışa aktardığın JSON dosyasını seç. Dosya bu cihazdan çıkmaz.</p>
+        <details class="help-panel">
+          <summary>Dosyayı nereden alırım?</summary>
+          <ol>
+            <li><strong>Android:</strong> Ayarlar → Konum → Konum hizmetleri → Zaman Çizelgesi → Zaman Çizelgesi verilerini dışa aktar.</li>
+            <li><strong>iPhone:</strong> Google Haritalar → profil fotoğrafın → Ayarlar → Kişisel içerik → Zaman Çizelgesi verilerini dışa aktar.</li>
+            <li>Çıkan <code>.json</code> dosyasını kaydet ve buraya sürükle.</li>
+          </ol>
+        </details>
+        <div class="source-actions">
+          <label class="file-button">
+            <span>Dosya seç</span>
+            <input id="timeline-file" type="file" accept="application/json,.json" />
+          </label>
+          <button id="sample-button" class="secondary" type="button">Örnek bir yolculuk dene</button>
+        </div>
+        <p id="file-status" class="status" role="status">Henüz dosya yüklenmedi</p>
+        <p id="compatibility-status" class="status muted">Video desteği kontrol ediliyor…</p>
+      </section>
+
+      <section id="settings-card" class="card step hidden" aria-labelledby="settings-heading">
+        <div class="step-head">
+          <span class="step-index">02</span>
+          <h2 id="settings-heading">Videoyu kur</h2>
+        </div>
+
+        <label id="raw-signals-row" class="checkbox-row hidden">
+          <input id="raw-signals-toggle" type="checkbox" />
+          <span>Ham konum verisini kullan</span>
+        </label>
+        <p id="raw-signals-description" class="status muted hidden">İşlenmemiş konum tahminleri kullanılıyor. Gürültü azaltılır ama rota ve mesafe yine de sapabilir.</p>
+        <label id="raw-accuracy-field" class="hidden">
+          <span class="field-label">Doğruluk sınırı (metre)</span>
+          <input id="raw-accuracy-limit" type="number" min="0" step="1" inputmode="decimal" value="100" />
+          <span class="field-help">Bundan daha isabetsiz konumlar atlanır. Boş bırakırsan hepsi kullanılır.</span>
+        </label>
+
+        <div id="period-controls">
+          <label class="checkbox-row">
+            <input id="exact-date-toggle" type="checkbox" />
+            <span>Gün gün seç</span>
+          </label>
+          <div id="month-range-fields" class="field-grid">
+            <label>
+              <span class="field-label">Başlangıç</span>
+              <select id="start-month"></select>
+            </label>
+            <label>
+              <span class="field-label">Bitiş</span>
+              <select id="end-month"></select>
+            </label>
+          </div>
+          <div id="exact-date-fields" class="field-grid hidden">
+            <label>
+              <span class="field-label">İlk gün</span>
+              <input id="start-date" type="date" />
+            </label>
+            <label>
+              <span class="field-label">Son gün</span>
+              <input id="end-date" type="date" />
+            </label>
+          </div>
+        </div>
+
+        <label>
+          <span class="field-label">Video başlığı</span>
+          <input id="video-title" type="text" maxlength="80" value="2018–2026 My Timeline" />
+        </label>
+
+        <div class="field-grid">
+          <label>
+            <span class="field-label">Süre</span>
+            <select id="duration">
+              <option value="10">10 saniye</option>
+              <option value="15">15 saniye</option>
+              <option value="20">20 saniye</option>
+              <option value="30">30 saniye</option>
+              <option value="45">45 saniye</option>
+              <option value="60">60 saniye</option>
+              <option value="75" selected>75 saniye</option>
+              <option value="90">90 saniye</option>
+              <option value="120">120 saniye</option>
+            </select>
+          </label>
+          <label>
+            <span class="field-label">Kamera</span>
+            <select id="camera-movement">
+              <option value="fixed">Sabit yakınlık</option>
+              <option value="steady" selected>Yumuşak takip</option>
+              <option value="dynamic">Hareketli takip</option>
+            </select>
+          </label>
+        </div>
+
+        <p id="selection-summary" class="summary"></p>
+
+        <div class="privacy-notice">
+          <label class="checkbox-row">
+            <input id="map-consent" type="checkbox" />
+            <span>Harita görsellerini indir</span>
+          </label>
+          <p>Seçtiğin rotanın geçtiği bölgeler için harita karoları indirilecek. Konum dosyan hiçbir yere gönderilmiyor.</p>
+        </div>
+
+        <p id="settings-error" class="error hidden" role="alert"></p>
+        <div class="actions">
+          <button id="preview-button" class="secondary" type="button">Önizle</button>
+          <button id="create-button" type="button" disabled>Videoyu oluştur</button>
+        </div>
+      </section>
+
+      <section id="preview-card" class="card step hidden" aria-labelledby="preview-heading">
+        <div class="step-head">
+          <span class="step-index">03</span>
+          <h2 id="preview-heading">Önizleme</h2>
+          <span id="progress-label" class="step-status">Hazır</span>
+        </div>
+        <div class="stage">
+          <canvas id="journey-canvas" width="1080" height="1920"></canvas>
+        </div>
+        <progress id="export-progress" class="hidden" value="0" max="1"></progress>
+        <button id="cancel-button" class="secondary cancel-button hidden" type="button">Oluşturmayı durdur</button>
+        <p id="error-message" class="error hidden" role="alert"></p>
+        <video id="result-video" class="hidden" controls playsinline></video>
+        <div id="result-actions" class="actions hidden">
+          <button id="share-button" type="button">Paylaş</button>
+          <a id="download-link" class="button secondary" download="larota.mp4">İndir</a>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="raw-only-dialog" aria-labelledby="raw-only-heading">
+      <form method="dialog" class="dialog-card">
+        <h2 id="raw-only-heading">Sadece ham konum verisi var</h2>
+        <p>Bu dosyada ham konum kayıtları var ama işlenmiş ziyaret ve yolculuk yok. Devam edebilirsin; rota gürültülü veya eksik çıkabilir, mesafe de yaklaşık olur.</p>
+        <p>Daha iyi sonuç için Google Haritalar'ı açıp zaman çizelgeni onayla, ziyaretlerin göründükten sonra dosyayı yeniden dışa aktar.</p>
+        <div class="dialog-actions">
+          <button id="open-google-maps" type="button">Google Haritalar'ı aç</button>
+          <button id="continue-raw-data" class="secondary" type="button">Ham veriyle devam et</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

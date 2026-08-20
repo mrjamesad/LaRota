@@ -1,0 +1,10 @@
+node_modules
+dist/
+.DS_Store
+*.log
+
+# Konum geçmişi dosyaları asla repoya girmesin
+location-history.json
+Timeline.json
+timeline.json
+*.mp4
