@@ -9,9 +9,9 @@
   --surface-raised: #1c2128;
   --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.16);
-  --accent: #ff2d87;
-  --accent-ink: #2b0014;
-  --accent-soft: rgba(255, 45, 135, 0.12);
+  --accent: #22d3ee;
+  --accent-ink: #04222a;
+  --accent-soft: rgba(34, 211, 238, 0.12);
   --danger: #ff8a8a;
 
   color: var(--ink);
@@ -34,8 +34,8 @@ body {
   min-height: 100svh;
   overscroll-behavior-y: none;
   background:
-    radial-gradient(120% 60% at 50% -10%, rgba(255, 45, 135, 0.15), transparent 62%),
-    radial-gradient(90% 55% at 100% 4%, rgba(120, 70, 255, 0.10), transparent 62%),
+    radial-gradient(120% 60% at 50% -10%, rgba(34, 211, 238, 0.15), transparent 62%),
+    radial-gradient(90% 55% at 100% 4%, rgba(56, 108, 255, 0.10), transparent 62%),
     var(--ground);
   background-attachment: fixed;
 }
@@ -70,14 +70,6 @@ button, input, select, .button { font: inherit; }
 .wordmark em {
   font-style: normal;
   color: var(--accent);
-}
-
-.topbar-note {
-  color: var(--ink-faint);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .preview-banner {
@@ -376,7 +368,6 @@ dialog::backdrop { background: rgba(6, 8, 10, 0.72); }
 /* Two buttons will not sit side by side on a narrow phone without wrapping text. */
 @media (max-width: 380px) {
   .actions { grid-template-columns: 1fr; }
-  .topbar-note { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

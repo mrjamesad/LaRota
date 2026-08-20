@@ -12,7 +12,7 @@ haritada canlandırır ve 1080×1920 bir MP4 çıkarır. Telefondan da çalış�
 
 - Ay ay veya gün gün aralık seçimi
 - Sabit / yumuşak / hareketli kamera
-- 10–120 saniye arası süre
+- 10–120 saniye arası süre; yüklediğin veriye göre bir süre önerilir
 - Üstte kayan ay ve biriken kilometre sayacı
 - İlerleyen işaret ulaşım türünü gösterir: yürüme, bisiklet, araba, otobüs, tren, uçak, feribot
 
@@ -53,6 +53,11 @@ Bu proje [mahlernim/google-timeline-visualizer](https://github.com/mahlernim/goo
 - **Ulaşım türü işareti.** Dışa aktarımdaki `activity` kaydında yürüme / araba /
   uçak gibi bir tür var; ilerleyen nokta bunu ikon olarak gösteriyor, alt satır da
   adını yazıyor. Duraklarda son bilinen tür korunuyor.
+- **Kavisli uzun bacaklar.** Uçuşlar düz kiriş yerine kutba yaslanan bir yay
+  çiziyor. Kavis tek yerde tanımlı, böylece işaret de aynı geometriyi izliyor.
+- **Mesafeye göre kamera ve çizgi.** Kamera yerel harekette şehir ölçeğine iniyor
+  (yerel ortanca 91 km genişlik), uzun bacaklarda geri açılıyor; iz kalınlığı da
+  yakınlaştıkça inceliyor ki altındaki sokaklar görünsün.
 - Voyager altlığı ve koyu arayüz.
 
 ## Lisans

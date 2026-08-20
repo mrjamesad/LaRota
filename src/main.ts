@@ -1,6 +1,7 @@
 import './style.css';
 import { frameAtElapsedSeconds, totalDurationSeconds } from './animation';
 import { cleanTimelinePoints } from './cleanup';
+import { suggestedDurationSeconds } from './duration';
 import { cumulativeDistances } from './geo';
 import { drawFrame, prepareJourney } from './renderer';
 import {
@@ -83,6 +84,7 @@ let encodingSupported = false;
 let compatibilityChecked = false;
 let isExporting = false;
 let isPreparing = false;
+let durationChosenByHand = false;
 let exportController: AbortController | null = null;
 
 function setError(message: string | null): void {
@@ -164,6 +166,21 @@ function refreshActionAvailability(points = currentPoints()): void {
   }
 }
 
+/**
+ * Offers a runtime that fits the selected period, and marks it in the list. The
+ * choice is only applied until the viewer picks one themselves.
+ */
+function applySuggestedDuration(points: GeoPoint[]): void {
+  const suggested = points.length >= 2 ? suggestedDurationSeconds(points) : null;
+  for (const option of durationSelect.options) {
+    const seconds = Number(option.value);
+    option.textContent = seconds === suggested
+      ? `${seconds} saniye · önerilen`
+      : `${seconds} saniye`;
+  }
+  if (suggested !== null && !durationChosenByHand) durationSelect.value = String(suggested);
+}
+
 function updateSelection(): void {
   cancelAnimationFrame(previewAnimation);
   setSettingsError(null);
@@ -188,6 +205,7 @@ function updateSelection(): void {
       : '';
     selectionSummary.textContent = `${points.length.toLocaleString()} konum noktası · ${estimate}${Math.round(distanceKm).toLocaleString()} km${ignored}`;
   }
+  applySuggestedDuration(points);
   prepared = null;
   selectedSignature = '';
   refreshActionAvailability(points);
@@ -255,6 +273,7 @@ function applyTimeline(data: unknown, sourceName: string, useRawOnly = false): v
   startDateInput.value = firstDate;
   endDateInput.value = lastDate;
   exactDateToggle.checked = false;
+  durationChosenByHand = false;
   rawSignalsToggle.checked = useRawOnly;
   rawSignalsRow.classList.toggle('hidden', useRawOnly || rawSignalPoints.length === 0);
   rawSignalsDescription.classList.toggle('hidden', !useRawOnly);
@@ -333,7 +352,10 @@ startSelect.addEventListener('change', updateSelection);
 endSelect.addEventListener('change', updateSelection);
 startDateInput.addEventListener('change', updateSelection);
 endDateInput.addEventListener('change', updateSelection);
-durationSelect.addEventListener('change', updateSelection);
+durationSelect.addEventListener('change', () => {
+  durationChosenByHand = true;
+  updateSelection();
+});
 cameraMovementSelect.addEventListener('change', updateSelection);
 exactDateToggle.addEventListener('change', () => {
   monthRangeFields.classList.toggle('hidden', exactDateToggle.checked);

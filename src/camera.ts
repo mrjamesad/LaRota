@@ -1,4 +1,5 @@
 import type { CameraFrame, CameraMovement, CameraTrack, Viewport, WorldPoint } from './types';
+import { bowedPoint } from './arc';
 import { worldBounds } from './geo';
 import { distanceAtProgress } from './pacing';
 import type { PacingCurve } from './pacing';
@@ -27,6 +28,7 @@ interface WorldPosition {
   distanceKm: number;
   fromIndex: number;
   toIndex: number;
+  fraction: number;
 }
 
 interface JourneyLeg {
@@ -48,14 +50,18 @@ const MOVEMENT_PROFILES: Record<CameraMovement, CameraMovementProfile> = {
     fixedZoom: true,
   },
   steady: {
+    // Context is a window of route distance, not of geography. At the upstream 650 km
+    // the camera framed a whole region while the traveller crossed a city, so years of
+    // commuting piled into a few pixels. 15 km puts the local median viewport at about
+    // 91 km across — city scale — while leg awareness still frames a flight end to end.
     contextFraction: 1,
-    minimumContextKm: 650,
-    maximumContextKm: 650,
+    minimumContextKm: 15,
+    maximumContextKm: 15,
     padding: 2.8,
     minimumViewportSpan: 0.00060,
     zoomOutAlpha: 0.14,
     zoomInAlpha: 0.035,
-    legAware: false,
+    legAware: true,
     fixedZoom: false,
   },
   dynamic: {
@@ -163,10 +169,10 @@ function legAt(legs: JourneyLeg[], distanceKm: number, totalDistanceKm: number):
 
 export function worldPositionAtDistance(journey: CameraJourney, distanceKm: number): WorldPosition {
   if (journey.worldPoints.length === 0) {
-    return { point: { x: 0.5, y: 0.5 }, distanceKm: 0, fromIndex: 0, toIndex: 0 };
+    return { point: { x: 0.5, y: 0.5 }, distanceKm: 0, fromIndex: 0, toIndex: 0, fraction: 0 };
   }
   if (journey.worldPoints.length === 1 || journey.totalDistanceKm <= 0) {
-    return { point: journey.worldPoints[0], distanceKm: 0, fromIndex: 0, toIndex: 0 };
+    return { point: journey.worldPoints[0], distanceKm: 0, fromIndex: 0, toIndex: 0, fraction: 0 };
   }
   const target = clamp(distanceKm, 0, journey.totalDistanceKm);
   const to = clamp(lowerBound(journey.cumulativeDistanceKm, target), 1, journey.worldPoints.length - 1);
@@ -178,13 +184,11 @@ export function worldPositionAtDistance(journey: CameraJourney, distanceKm: numb
     1,
   );
   return {
-    point: {
-      x: journey.worldPoints[from].x + (journey.worldPoints[to].x - journey.worldPoints[from].x) * fraction,
-      y: journey.worldPoints[from].y + (journey.worldPoints[to].y - journey.worldPoints[from].y) * fraction,
-    },
+    point: bowedPoint(journey.worldPoints[from], journey.worldPoints[to], fraction),
     distanceKm: target,
     fromIndex: from,
     toIndex: to,
+    fraction,
   };
 }
 

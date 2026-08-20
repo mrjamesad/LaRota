@@ -7,6 +7,7 @@ import {
   worldPositionAtProgress,
 } from './camera';
 import { cumulativeDistances, overviewRouteSegments, project, unwrapWorldPoints } from './geo';
+import { bowedPartial, bowedPolyline } from './arc';
 import { drawModeGlyph } from './glyph';
 import { journeySubtitle } from './label';
 import { buildPacingCurve } from './pacing';
@@ -246,36 +247,50 @@ export async function prepareJourney(
   };
 }
 
-function pointAtProgress(
-  journey: PreparedJourney,
-  progress: number,
-): { point: WorldPoint; completedIndex: number; distanceKm: number } {
+function pointAtProgress(journey: PreparedJourney, progress: number) {
   const position = worldPositionAtProgress(journey, progress);
-  return {
-    point: position.point,
-    completedIndex: position.fromIndex,
-    distanceKm: position.distanceKm,
-  };
+  return { ...position, completedIndex: position.fromIndex };
 }
 
+/**
+ * `tail` is already-curved geometry — the part-finished hop the marker sits on —
+ * so it is traced as given. Gaps between `points` are expanded here, because a
+ * long hop is drawn as a bow rather than a chord.
+ */
 function strokeRoute(
   context: CanvasRenderingContext2D,
   points: WorldPoint[],
-  head: WorldPoint,
+  tail: WorldPoint[],
   viewport: Viewport,
   width: number,
   height: number,
 ): void {
   if (points.length === 0) return;
   context.beginPath();
-  points.forEach((point, index) => {
-    const [x, y] = worldToCanvas(point, viewport, width, height);
-    if (index === 0) context.moveTo(x, y);
-    else context.lineTo(x, y);
-  });
-  const [headX, headY] = worldToCanvas(head, viewport, width, height);
-  context.lineTo(headX, headY);
+  const [startX, startY] = worldToCanvas(points[0], viewport, width, height);
+  context.moveTo(startX, startY);
+  for (let index = 1; index < points.length; index += 1) {
+    for (const step of bowedPolyline(points[index - 1], points[index])) {
+      const [x, y] = worldToCanvas(step, viewport, width, height);
+      context.lineTo(x, y);
+    }
+  }
+  for (const step of tail) {
+    const [x, y] = worldToCanvas(step, viewport, width, height);
+    context.lineTo(x, y);
+  }
   context.stroke();
+}
+
+/**
+ * A fixed pixel width hides the streets underneath once the camera is close in,
+ * so the trail thins as the viewport narrows and thickens for continental views.
+ */
+function zoomWidthScale(viewport: Viewport, floor: number): number {
+  const span = Math.max(viewport.maxX - viewport.minX, 1e-9);
+  const t = Math.max(0, Math.min(1,
+    (Math.log(span) - Math.log(0.0006)) / (Math.log(0.05) - Math.log(0.0006))));
+  return floor + (1 - floor) * t;
 }
 
 /** A slice of the route, thinned to what the current zoom can actually show. */
@@ -333,6 +348,13 @@ export function drawFrame(
   drawMapBackground(canvas, viewport, journey.tiles);
 
   const current = pointAtProgress(journey, frame.journeyProgress);
+  const headTail = bowedPartial(
+    journey.worldPoints[current.fromIndex],
+    journey.worldPoints[current.toIndex],
+    current.fraction,
+  );
+  const trailScale = zoomWidthScale(viewport, 0.40);
+  const markerScale = zoomWidthScale(viewport, 0.74);
   const worldPerPixel = (viewport.maxX - viewport.minX) / width;
   // Upstream's stroke widths are absolute pixels tuned at 480 wide. Scaling by the
   // same factor keeps the reference proportions at any canvas size.
@@ -349,11 +371,11 @@ export function drawFrame(
   layerContext.lineCap = 'round';
   layerContext.lineJoin = 'round';
   layerContext.strokeStyle = THEME.trail;
-  layerContext.lineWidth = 5 * strokeScale;
+  layerContext.lineWidth = 5 * strokeScale * trailScale;
   strokeRoute(
     layerContext,
     traveledPath(journey, 0, current.completedIndex, worldPerPixel),
-    current.point,
+    headTail,
     viewport,
     width,
     height,
@@ -372,11 +394,11 @@ export function drawFrame(
     journey.cumulativeDistanceKm.findIndex((distance) => distance >= recentStartDistance),
   );
   context.strokeStyle = THEME.trail;
-  context.lineWidth = 8 * strokeScale;
+  context.lineWidth = 8 * strokeScale * trailScale;
   strokeRoute(
     context,
     traveledPath(journey, recentStartIndex, current.completedIndex, worldPerPixel),
-    current.point,
+    headTail,
     viewport,
     width,
     height,
@@ -388,19 +410,19 @@ export function drawFrame(
   context.shadowBlur = 12 * strokeScale;
   context.fillStyle = THEME.headRing;
   context.beginPath();
-  context.arc(headX, headY, 20 * strokeScale, 0, Math.PI * 2);
+  context.arc(headX, headY, 20 * strokeScale * markerScale, 0, Math.PI * 2);
   context.fill();
   context.shadowBlur = 0;
   context.fillStyle = THEME.trail;
   context.beginPath();
-  context.arc(headX, headY, 16.5 * strokeScale, 0, Math.PI * 2);
+  context.arc(headX, headY, 16.5 * strokeScale * markerScale, 0, Math.PI * 2);
   context.fill();
   drawModeGlyph(
     context,
     journey.points[current.completedIndex]?.mode,
     headX,
     headY,
-    21 * strokeScale,
+    21 * strokeScale * markerScale,
     THEME.glyph,
     THEME.trail,
   );
@@ -410,16 +432,9 @@ export function drawFrame(
     context.save();
     context.globalAlpha = (190 / 255) * easeInOutCubic(frame.outroProgress);
     context.strokeStyle = THEME.trail;
-    context.lineWidth = 3.5 * strokeScale;
+    context.lineWidth = 3.5 * strokeScale * trailScale;
     for (const segment of journey.overviewRouteSegments) {
-      strokeRoute(
-        context,
-        segment.slice(0, -1),
-        segment.at(-1) ?? current.point,
-        viewport,
-        width,
-        height,
-      );
+      strokeRoute(context, segment, [], viewport, width, height);
     }
     context.restore();
   }
