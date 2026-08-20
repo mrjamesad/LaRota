@@ -27,4 +27,18 @@ describe('journeySubtitle', () => {
   it('clamps an index past the end of the journey', () => {
     expect(journeySubtitle(points, 99, 100)).toBe('August 2025 · 100 km');
   });
+
+  it('names the transport mode when the point carries one', () => {
+    const flying: GeoPoint[] = [
+      { instant: new Date('2025-07-04T10:00:00Z'), latitude: 40, longitude: 30, mode: 'flight' },
+    ];
+    expect(journeySubtitle(flying, 0, 2544)).toBe('July 2025 · 2,544 km · flying');
+  });
+
+  it('leaves the subtitle alone for an unknown mode', () => {
+    const idle: GeoPoint[] = [
+      { instant: new Date('2025-07-04T10:00:00Z'), latitude: 40, longitude: 30, mode: 'unknown' },
+    ];
+    expect(journeySubtitle(idle, 0, 10)).toBe('July 2025 · 10 km');
+  });
 });

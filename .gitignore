@@ -8,3 +8,4 @@ location-history.json
 Timeline.json
 timeline.json
 *.mp4
+tsconfig.tsbuildinfo
