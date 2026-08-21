@@ -48,6 +48,23 @@
           <button id="sample-button" class="secondary" type="button">Örnek bir yolculuk dene</button>
         </div>
         <p id="file-status" class="status" role="status">Henüz dosya yüklenmedi</p>
+
+        <div class="source-actions">
+          <label class="file-button">
+            <span>Instagram dosyası ekle</span>
+            <input id="instagram-file" type="file" accept="application/json,.json" />
+          </label>
+        </div>
+        <details class="help-panel">
+          <summary>Instagram dosyasını nereden alırım?</summary>
+          <ol>
+            <li>Instagram → <strong>Hesaplar Merkezi</strong> → Bilgilerin ve izinlerin → <strong>Bilgilerini indir</strong>.</li>
+            <li>Biçim <strong>JSON</strong> olsun; kategorilerden <strong>Media</strong>'yı seç.</li>
+            <li>Gelen arşivi aç, <code>your_instagram_activity → media → stories.json</code> dosyasını buraya sürükle. <code>posts_1.json</code> ve <code>reels.json</code> de olur.</li>
+          </ol>
+          <p>İsteğe bağlı. Paylaşımlarından konum bilgisi taşıyanlar, o anda işaretin ikonunu Instagram'a çevirir; rotanın kendisi Google zaman çizelgesinden çizilmeye devam eder. Bu dosya da cihazından çıkmaz.</p>
+        </details>
+        <p id="instagram-status" class="status muted">Instagram dosyası eklenmedi</p>
         <p id="compatibility-status" class="status muted">Video desteği kontrol ediliyor…</p>
       </section>
 

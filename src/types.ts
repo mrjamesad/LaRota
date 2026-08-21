@@ -9,6 +9,8 @@ export interface GeoPoint {
   recordedDate?: string;
   timeZoneMissing?: boolean;
   mode?: TravelMode;
+  /** Set when this moment came from a social export rather than the Timeline. */
+  share?: 'instagram';
 }
 
 export interface MonthOption {

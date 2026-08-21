@@ -8,7 +8,7 @@ import {
 } from './camera';
 import { cumulativeDistances, overviewRouteSegments, project, unwrapWorldPoints } from './geo';
 import { bowedPartial, bowedPolyline } from './arc';
-import { drawModeGlyph } from './glyph';
+import { drawModeGlyph, glyphFor } from './glyph';
 import { journeySubtitle } from './label';
 import { buildPacingCurve } from './pacing';
 import { buildSimplificationLadder, indicesForTolerance } from './simplify';
@@ -419,7 +419,7 @@ export function drawFrame(
   context.fill();
   drawModeGlyph(
     context,
-    journey.points[current.completedIndex]?.mode,
+    glyphFor(journey.points[current.completedIndex]),
     headX,
     headY,
     21 * strokeScale * markerScale,

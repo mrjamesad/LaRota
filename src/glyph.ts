@@ -1,6 +1,19 @@
 import type { TravelMode } from './travel';
+import type { GeoPoint } from './types';
 
 type Ctx = CanvasRenderingContext2D;
+
+/** What the marker draws at a moment: how it is moving, or that it posted from here. */
+export type GlyphKind = TravelMode | 'instagram';
+
+/**
+ * A mode is carried forward across visits, so a shared moment nearly always has
+ * one too. The share is the more particular thing to say about that instant, so
+ * it wins.
+ */
+export function glyphFor(point: GeoPoint | undefined): GlyphKind | undefined {
+  return point?.share ?? point?.mode;
+}
 
 /**
  * Mode marks drawn with canvas primitives rather than an icon font, so the video
@@ -131,9 +144,22 @@ function ferry(context: Ctx): void {
   context.fill();
 }
 
+/** The share mark: outlined so it reads against the disc like the boxed modes do. */
+function instagram(context: Ctx): void {
+  context.beginPath();
+  context.roundRect(-8.4, -8.4, 16.8, 16.8, 5.2);
+  context.stroke();
+  context.beginPath();
+  context.arc(0, 0, 4.3, 0, Math.PI * 2);
+  context.stroke();
+  context.beginPath();
+  context.arc(4.9, -4.9, 1.4, 0, Math.PI * 2);
+  context.fill();
+}
+
 export function drawModeGlyph(
   context: Ctx,
-  mode: TravelMode | undefined,
+  mode: GlyphKind | undefined,
   centerX: number,
   centerY: number,
   size: number,
@@ -157,5 +183,6 @@ export function drawModeGlyph(
   else if (mode === 'cycling') cycling(context);
   else if (mode === 'flight') flight(context);
   else if (mode === 'ferry') ferry(context);
+  else if (mode === 'instagram') instagram(context);
   context.restore();
 }

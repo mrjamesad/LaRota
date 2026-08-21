@@ -15,6 +15,7 @@ haritada canlandırır ve 1080×1920 bir MP4 çıkarır. Telefondan da çalış�
 - 10–120 saniye arası süre; yüklediğin veriye göre bir süre önerilir
 - Üstte kayan ay ve biriken kilometre sayacı
 - İlerleyen işaret ulaşım türünü gösterir: yürüme, bisiklet, araba, otobüs, tren, uçak, feribot
+- İsteğe bağlı Instagram dosyası: konum taşıyan paylaşımlarında işaret Instagram ikonuna döner
 
 ## Nasıl kullanılır
 
@@ -30,7 +31,7 @@ Uzun aralıklarda önce 10 saniyelik bir deneme almak işe yarar.
 ```bash
 npm install --legacy-peer-deps
 npm run dev        # yerel sunucu
-npm test           # 70 test
+npm test           # 119 test
 npm run build      # dist/
 ```
 

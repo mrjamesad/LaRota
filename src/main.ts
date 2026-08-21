@@ -3,7 +3,9 @@ import { frameAtElapsedSeconds, totalDurationSeconds } from './animation';
 import { cleanTimelinePoints } from './cleanup';
 import { suggestedDurationSeconds } from './duration';
 import { cumulativeDistances } from './geo';
+import { countSharedMedia, InstagramParseError, parseInstagramJson } from './instagram';
 import { drawFrame, prepareJourney } from './renderer';
+import { attachSharePoints } from './share';
 import {
   availableMonths,
   localDateKey,
@@ -28,6 +30,8 @@ function element<T extends HTMLElement>(id: string): T {
 const fileInput = element<HTMLInputElement>('timeline-file');
 const sampleButton = element<HTMLButtonElement>('sample-button');
 const fileStatus = element<HTMLParagraphElement>('file-status');
+const instagramFile = element<HTMLInputElement>('instagram-file');
+const instagramStatus = element<HTMLParagraphElement>('instagram-status');
 const compatibilityStatus = element<HTMLParagraphElement>('compatibility-status');
 const settingsCard = element<HTMLElement>('settings-card');
 const exactDateToggle = element<HTMLInputElement>('exact-date-toggle');
@@ -71,6 +75,11 @@ if (import.meta.env.VITE_PREVIEW === 'true') {
 
 let allPoints: GeoPoint[] = [];
 let semanticPoints: GeoPoint[] = [];
+let timelinePoints: GeoPoint[] = [];
+let timelineSourceName = '';
+let timelineIsRawOnly = false;
+let sharePoints: GeoPoint[] = [];
+let sharedMediaCount = 0;
 let rawSignalPoints: RawSignalPoint[] = [];
 let rawSignalProcessing: RawSignalProcessingResult | null = null;
 let pendingRawOnlyImport: { data: unknown; sourceName: string } | null = null;
@@ -253,8 +262,22 @@ function parseTimelineText(text: string): unknown {
 function applyTimeline(data: unknown, sourceName: string, useRawOnly = false): void {
   rawSignalPoints = parseRawSignalsJson(data);
   rawSignalProcessing = processRawSignals(rawSignalPoints, Number(rawAccuracyLimit.value));
-  semanticPoints = useRawOnly ? [] : cleanTimelinePoints(parseTimelineJson(data));
-  allPoints = useRawOnly ? rawSignalProcessing.points : semanticPoints;
+  timelinePoints = useRawOnly ? [] : cleanTimelinePoints(parseTimelineJson(data));
+  timelineSourceName = sourceName;
+  timelineIsRawOnly = useRawOnly;
+  adoptPoints();
+}
+
+/**
+ * Rebuilds every range control from the merged point set. Split out of
+ * `applyTimeline` because an Instagram file arriving later has to redo all of it
+ * without reparsing the Timeline export.
+ */
+function adoptPoints(): void {
+  const useRawOnly = timelineIsRawOnly;
+  const sourceName = timelineSourceName;
+  semanticPoints = attachSharePoints(timelinePoints, sharePoints);
+  allPoints = useRawOnly ? rawSignalProcessing?.points ?? [] : semanticPoints;
   if (allPoints.length === 0) {
     throw new TimelineParseError('no-usable-locations', 'Bu dosyada kullanılabilir konum noktası yok.');
   }
@@ -289,7 +312,26 @@ function applyTimeline(data: unknown, sourceName: string, useRawOnly = false): v
     : '';
   const sourceNote = useRawOnly ? ' · ham konum verisi' : '';
   fileStatus.textContent = `${sourceName} · ${allPoints.length.toLocaleString()} nokta · ${months[0].label} – ${months.at(-1)?.label}${sourceNote}${timezoneNote}`;
+  refreshShareStatus();
   updateSelection();
+}
+
+function refreshShareStatus(): void {
+  if (sharePoints.length === 0) {
+    instagramStatus.textContent = 'Instagram dosyası eklenmedi';
+    return;
+  }
+  const located = `${sharedMediaCount.toLocaleString()} paylaşımdan ${sharePoints.length} tanesinde konum var`;
+  if (timelineIsRawOnly) {
+    instagramStatus.textContent = `${located} · ham konum modunda işaretler kullanılmıyor`;
+    return;
+  }
+  if (timelinePoints.length === 0) {
+    instagramStatus.textContent = `${located} · şimdi Google Timeline dosyanı seç`;
+    return;
+  }
+  const marked = allPoints.filter((point) => point.share).length;
+  instagramStatus.textContent = `${located} · ${marked} tanesi rotaya işlendi`;
 }
 
 async function loadTimeline(file: File): Promise<void> {
@@ -330,6 +372,32 @@ fileInput.addEventListener('change', async () => {
     setError(error instanceof Error ? error.message : 'Dosya okunamadı.');
     previewCard.classList.remove('hidden');
   }
+});
+
+instagramFile.addEventListener('change', async () => {
+  const file = instagramFile.files?.[0];
+  if (!file) return;
+  setError(null);
+  setSettingsError(null);
+  instagramStatus.textContent = `${file.name} okunuyor…`;
+  try {
+    const data = parseTimelineText(await file.text());
+    sharedMediaCount = countSharedMedia(data);
+    sharePoints = parseInstagramJson(data);
+  } catch (error) {
+    sharePoints = [];
+    instagramStatus.textContent = error instanceof InstagramParseError
+      && error.reason === 'no-usable-locations'
+      ? `${sharedMediaCount.toLocaleString()} paylaşım okundu, hiçbirinde konum yok`
+      : (error instanceof Error ? error.message : 'Instagram dosyası okunamadı.');
+    return;
+  }
+  // Without a Timeline there is no route to mark, so hold the shares until one arrives.
+  if (timelinePoints.length === 0 && !timelineIsRawOnly) {
+    refreshShareStatus();
+    return;
+  }
+  adoptPoints();
 });
 
 sampleButton.addEventListener('click', async () => {
