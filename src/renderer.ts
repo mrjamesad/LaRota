@@ -321,6 +321,16 @@ function trailLayerFor(width: number, height: number): HTMLCanvasElement {
   return trailLayer;
 }
 
+/**
+ * The hop the marker is currently crossing. Both the mode mark and the subtitle
+ * describe the leg being travelled, not the point left behind.
+ */
+function outgoingLegKm(journey: PreparedJourney, index: number): number {
+  const distances = journey.cumulativeDistanceKm;
+  if (index < 0 || index + 1 >= distances.length) return 0;
+  return distances[index + 1] - distances[index];
+}
+
 export function drawFrame(
   canvas: HTMLCanvasElement,
   journey: PreparedJourney,
@@ -419,7 +429,7 @@ export function drawFrame(
   context.fill();
   drawModeGlyph(
     context,
-    glyphFor(journey.points[current.completedIndex]),
+    glyphFor(journey.points[current.completedIndex], outgoingLegKm(journey, current.completedIndex)),
     headX,
     headY,
     21 * strokeScale * markerScale,
@@ -454,7 +464,12 @@ export function drawFrame(
   context.fillStyle = THEME.subtitle;
   context.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
   context.fillText(
-    journeySubtitle(journey.points, current.completedIndex, current.distanceKm),
+    journeySubtitle(
+      journey.points,
+      current.completedIndex,
+      current.distanceKm,
+      outgoingLegKm(journey, current.completedIndex),
+    ),
     width / 2,
     108 * scale,
   );

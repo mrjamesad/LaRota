@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normaliseTravelMode, travelModeLabel } from './travel';
+import { inferTravelMode, normaliseTravelMode, travelModeLabel } from './travel';
 
 describe('normaliseTravelMode', () => {
   it('reads the activity types this export actually contains', () => {
@@ -39,5 +39,29 @@ describe('travelModeLabel', () => {
   it('says nothing for an unknown or missing mode', () => {
     expect(travelModeLabel('unknown')).toBe('');
     expect(travelModeLabel(undefined)).toBe('');
+  });
+});
+
+describe('inferTravelMode', () => {
+  it('reads a country-level hop as a flight', () => {
+    expect(inferTravelMode(2532)).toBe('flight');
+  });
+
+  it('reads an intercity hop as driving', () => {
+    expect(inferTravelMode(280)).toBe('driving');
+  });
+
+  it('says nothing about local movement', () => {
+    // Under 60 km the distance cannot tell a walk from a bus, and a wrong icon
+    // is worse than none: the share mark shows there instead.
+    expect(inferTravelMode(12)).toBeUndefined();
+    expect(inferTravelMode(0)).toBeUndefined();
+  });
+
+  it('agrees with the boundaries the pacing curve already classifies by', () => {
+    expect(inferTravelMode(60)).toBeUndefined();
+    expect(inferTravelMode(61)).toBe('driving');
+    expect(inferTravelMode(400)).toBe('driving');
+    expect(inferTravelMode(401)).toBe('flight');
   });
 });

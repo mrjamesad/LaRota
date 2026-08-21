@@ -29,3 +29,27 @@ describe('glyphFor', () => {
     expect(glyphFor(undefined)).toBeUndefined();
   });
 });
+
+describe('glyphFor across a leg', () => {
+  it('flies the marker over a country-level hop out of a share', () => {
+    // London to Berlin between two Instagram posts: the crossing should read as
+    // a flight, not as an Instagram mark drifting across a continent.
+    expect(glyphFor(point({ share: 'instagram' }), 930)).toBe('flight');
+  });
+
+  it('drives the marker between cities', () => {
+    expect(glyphFor(point({ share: 'instagram' }), 280)).toBe('driving');
+  });
+
+  it('keeps the share mark where the movement is local', () => {
+    expect(glyphFor(point({ share: 'instagram' }), 0.7)).toBe('instagram');
+  });
+
+  it('lets a real transport mode outrank the share mark in transit', () => {
+    expect(glyphFor(point({ mode: 'rail', share: 'instagram' }), 280)).toBe('rail');
+  });
+
+  it('still shows the transport mode of an ordinary timeline point', () => {
+    expect(glyphFor(point({ mode: 'walking' }), 0.4)).toBe('walking');
+  });
+});

@@ -1,4 +1,4 @@
-import { travelModeLabel } from './travel';
+import { inferTravelMode, travelModeLabel } from './travel';
 import type { GeoPoint } from './types';
 
 const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -16,11 +16,12 @@ export function journeySubtitle(
   points: GeoPoint[],
   index: number,
   distanceKm: number,
+  outgoingKm = 0,
 ): string {
   const kilometres = `${Math.round(distanceKm).toLocaleString('en-US')} km`;
   const point = points[Math.max(0, Math.min(points.length - 1, index))];
   if (!point) return kilometres;
   const line = `${MONTH_FORMAT.format(point.instant)} · ${kilometres}`;
-  const mode = travelModeLabel(point.mode);
+  const mode = travelModeLabel(point.mode ?? inferTravelMode(outgoingKm));
   return mode ? `${line} · ${mode}` : line;
 }

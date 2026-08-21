@@ -42,3 +42,14 @@ describe('journeySubtitle', () => {
     expect(journeySubtitle(idle, 0, 10)).toBe('July 2025 · 10 km');
   });
 });
+
+describe('journeySubtitle with an inferred mode', () => {
+  it('names the crossing when the point carries no mode of its own', () => {
+    const points = [
+      { instant: new Date('2026-02-03T16:00:00Z'), latitude: 51.5, longitude: -0.12 },
+      { instant: new Date('2026-02-05T16:00:00Z'), latitude: 52.5, longitude: 13.4 },
+    ];
+
+    expect(journeySubtitle(points, 0, 930, 930)).toContain('flying');
+  });
+});

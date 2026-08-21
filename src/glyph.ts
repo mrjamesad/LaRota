@@ -1,3 +1,4 @@
+import { inferTravelMode, DEFAULT_PACING_INTERCITY_KM } from './travel';
 import type { TravelMode } from './travel';
 import type { GeoPoint } from './types';
 
@@ -7,12 +8,19 @@ type Ctx = CanvasRenderingContext2D;
 export type GlyphKind = TravelMode | 'instagram';
 
 /**
- * A mode is carried forward across visits, so a shared moment nearly always has
- * one too. The share is the more particular thing to say about that instant, so
- * it wins.
+ * What the marker should show while it travels the leg leaving `point`.
+ *
+ * In transit the leg wins: a share sitting at the start of a flight to Berlin
+ * should fly, not drift across a continent wearing a camera. Standing still, the
+ * share wins — that is the particular thing to say about the moment, and a mode
+ * carried forward from an earlier segment says nothing new.
  */
-export function glyphFor(point: GeoPoint | undefined): GlyphKind | undefined {
-  return point?.share ?? point?.mode;
+export function glyphFor(point: GeoPoint | undefined, outgoingKm = 0): GlyphKind | undefined {
+  if (!point) return undefined;
+  const inTransit = outgoingKm > DEFAULT_PACING_INTERCITY_KM;
+  if (point.share && !inTransit) return 'instagram';
+  const mode = point.mode && point.mode !== 'unknown' ? point.mode : inferTravelMode(outgoingKm);
+  return mode ?? point.share;
 }
 
 /**
