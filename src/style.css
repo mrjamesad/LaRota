@@ -179,6 +179,11 @@ button:disabled { cursor: not-allowed; opacity: 0.35; }
 .file-button { width: 100%; }
 .file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .source-actions { display: grid; gap: 9px; margin-top: 16px; }
+
+/* The two sources are equal choices now, so they sit as a pair rather than a stack. */
+.source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; align-items: start; }
+.source-grid .file-button { margin-top: 0; padding-inline: 12px; text-align: center; }
+.source-slot .status { margin-top: 10px; }
 .source-actions button { width: 100%; }
 
 label {
@@ -368,6 +373,7 @@ dialog::backdrop { background: rgba(6, 8, 10, 0.72); }
 /* Two buttons will not sit side by side on a narrow phone without wrapping text. */
 @media (max-width: 380px) {
   .actions { grid-template-columns: 1fr; }
+  .source-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

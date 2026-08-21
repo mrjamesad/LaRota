@@ -31,40 +31,35 @@
           <span class="step-index">01</span>
           <h2 id="source-heading">Konum dosyası</h2>
         </div>
-        <p>Dışa aktardığın JSON dosyasını seç. Dosya bu cihazdan çıkmaz.</p>
-        <details class="help-panel">
-          <summary>Dosyayı nereden alırım?</summary>
-          <ol>
-            <li><strong>Android:</strong> Ayarlar → Konum → Konum hizmetleri → Zaman Çizelgesi → Zaman Çizelgesi verilerini dışa aktar.</li>
-            <li><strong>iPhone:</strong> Google Haritalar → profil fotoğrafın → Ayarlar → Kişisel içerik → Zaman Çizelgesi verilerini dışa aktar.</li>
-            <li>Çıkan <code>.json</code> dosyasını kaydet ve buraya sürükle.</li>
-          </ol>
-        </details>
+        <p>Google zaman çizelgeni, Instagram paylaşımlarını ya da ikisini birden seç. Dosyalar bu cihazdan çıkmaz.</p>
+        <div class="source-grid">
+          <div class="source-slot">
+            <label class="file-button">
+              <span>Google Timeline</span>
+              <input id="timeline-file" type="file" accept="application/json,.json" />
+            </label>
+            <p id="file-status" class="status" role="status">Seçilmedi</p>
+          </div>
+          <div class="source-slot">
+            <label class="file-button">
+              <span>Instagram</span>
+              <input id="instagram-file" type="file" accept="application/json,.json" />
+            </label>
+            <p id="instagram-status" class="status muted">Seçilmedi</p>
+          </div>
+        </div>
         <div class="source-actions">
-          <label class="file-button">
-            <span>Dosya seç</span>
-            <input id="timeline-file" type="file" accept="application/json,.json" />
-          </label>
           <button id="sample-button" class="secondary" type="button">Örnek bir yolculuk dene</button>
         </div>
-        <p id="file-status" class="status" role="status">Henüz dosya yüklenmedi</p>
-
-        <div class="source-actions">
-          <label class="file-button">
-            <span>Instagram dosyası ekle</span>
-            <input id="instagram-file" type="file" accept="application/json,.json" />
-          </label>
-        </div>
         <details class="help-panel">
-          <summary>Instagram dosyasını nereden alırım?</summary>
+          <summary>Dosyaları nereden alırım?</summary>
           <ol>
-            <li>Instagram → <strong>Hesaplar Merkezi</strong> → Bilgilerin ve izinlerin → <strong>Bilgilerini indir</strong>.</li>
-            <li>Biçim <strong>JSON</strong> olsun; kategorilerden <strong>Media</strong>'yı seç.</li>
-            <li>Gelen arşivi aç, <code>your_instagram_activity → media → stories.json</code> dosyasını buraya sürükle. <code>posts_1.json</code> ve <code>reels.json</code> de olur.</li>
+            <li><strong>Google, Android:</strong> Ayarlar → Konum → Konum hizmetleri → Zaman Çizelgesi → Zaman Çizelgesi verilerini dışa aktar.</li>
+            <li><strong>Google, iPhone:</strong> Google Haritalar → profil fotoğrafın → Ayarlar → Kişisel içerik → Zaman Çizelgesi verilerini dışa aktar.</li>
+            <li><strong>Instagram:</strong> Hesaplar Merkezi → Bilgilerin ve izinlerin → Bilgilerini indir. Biçim <strong>JSON</strong>, kategori <strong>Media</strong>. Arşivi aç, <code>your_instagram_activity → media → stories.json</code> dosyasını seç; <code>posts_1.json</code> ve <code>reels.json</code> de olur.</li>
           </ol>
-          <p>İsteğe bağlı. Paylaşımlarından konum bilgisi taşıyanlar, o anda işaretin ikonunu Instagram'a çevirir; rotanın kendisi Google zaman çizelgesinden çizilmeye devam eder. Bu dosya da cihazından çıkmaz.</p>
+          <p>Google dosyası rotayı çizer. Instagram'da konum bilgisi taşıyan paylaşımlar, o anda işaretin ikonunu Instagram'a çevirir. Instagram'ı tek başına yüklersen rota yalnızca o paylaşımlardan çizilir — seyrek ve sıçramalı olur.</p>
         </details>
-        <p id="instagram-status" class="status muted">Instagram dosyası eklenmedi</p>
         <p id="compatibility-status" class="status muted">Video desteği kontrol ediliyor…</p>
       </section>
 

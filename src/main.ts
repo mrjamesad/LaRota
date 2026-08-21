@@ -318,7 +318,7 @@ function adoptPoints(): void {
 
 function refreshShareStatus(): void {
   if (sharePoints.length === 0) {
-    instagramStatus.textContent = 'Instagram dosyası eklenmedi';
+    instagramStatus.textContent = 'Seçilmedi';
     return;
   }
   const located = `${sharedMediaCount.toLocaleString()} paylaşımdan ${sharePoints.length} tanesinde konum var`;
@@ -327,7 +327,7 @@ function refreshShareStatus(): void {
     return;
   }
   if (timelinePoints.length === 0) {
-    instagramStatus.textContent = `${located} · şimdi Google Timeline dosyanı seç`;
+    instagramStatus.textContent = `${located} · rota yalnızca paylaşımlardan çiziliyor`;
     return;
   }
   const marked = allPoints.filter((point) => point.share).length;
@@ -392,10 +392,9 @@ instagramFile.addEventListener('change', async () => {
       : (error instanceof Error ? error.message : 'Instagram dosyası okunamadı.');
     return;
   }
-  // Without a Timeline there is no route to mark, so hold the shares until one arrives.
+  // With no Timeline loaded the shares are the whole journey, so they name the source.
   if (timelinePoints.length === 0 && !timelineIsRawOnly) {
-    refreshShareStatus();
-    return;
+    timelineSourceName = file.name;
   }
   adoptPoints();
 });
