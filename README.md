@@ -7,10 +7,11 @@ Her şey tarayıcıda çalışır: konum dosyan hiçbir sunucuya gönderilmez.
 
 ## Ne yapar
 
-Google zaman çizelgesi dışa aktarımını (`.json`) alır, seçtiğin tarih aralığını
-haritada canlandırır ve 1080×1920 bir MP4 çıkarır. Telefondan da çalışır.
+Google zaman çizelgesi dışa aktarımını, Instagram paylaşımlarını ya da ikisini
+birden (`.json`) alır, seçtiğin tarih aralığını haritada canlandırır ve 1080×1920
+bir MP4 çıkarır. Telefondan da çalışır.
 
-- Ay ay veya gün gün aralık seçimi
+- Tümü / son 1 yıl / son 6 ay hazır aralıkları, ya da gün gün özel aralık
 - Sabit / yumuşak / hareketli kamera
 - 10–120 saniye arası süre; yüklediğin veriye göre bir süre önerilir
 - Üstte kayan ay ve biriken kilometre sayacı
@@ -31,7 +32,7 @@ Uzun aralıklarda önce 10 saniyelik bir deneme almak işe yarar.
 ```bash
 npm install --legacy-peer-deps
 npm run dev        # yerel sunucu
-npm test           # 119 test
+npm test           # 127 test
 npm run build      # dist/
 ```
 

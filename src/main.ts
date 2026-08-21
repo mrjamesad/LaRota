@@ -5,6 +5,8 @@ import { suggestedDurationSeconds } from './duration';
 import { cumulativeDistances } from './geo';
 import { countSharedMedia, InstagramParseError, parseInstagramJson } from './instagram';
 import { drawFrame, prepareJourney } from './renderer';
+import { availablePresets, presetRange } from './period';
+import type { RangePreset } from './period';
 import { attachSharePoints } from './share';
 import {
   availableMonths,
@@ -14,7 +16,6 @@ import {
   pointDateKey,
   processRawSignals,
   selectDateRange,
-  selectRange,
   TimelineParseError,
 } from './timeline';
 import type { RawSignalPoint, RawSignalProcessingResult } from './timeline';
@@ -34,24 +35,20 @@ const instagramFile = element<HTMLInputElement>('instagram-file');
 const instagramStatus = element<HTMLParagraphElement>('instagram-status');
 const compatibilityStatus = element<HTMLParagraphElement>('compatibility-status');
 const settingsCard = element<HTMLElement>('settings-card');
-const exactDateToggle = element<HTMLInputElement>('exact-date-toggle');
+const rangePresets = element<HTMLElement>('range-presets');
 const periodControls = element<HTMLElement>('period-controls');
 const rawSignalsRow = element<HTMLElement>('raw-signals-row');
 const rawSignalsToggle = element<HTMLInputElement>('raw-signals-toggle');
 const rawSignalsDescription = element<HTMLElement>('raw-signals-description');
 const rawAccuracyField = element<HTMLElement>('raw-accuracy-field');
 const rawAccuracyLimit = element<HTMLInputElement>('raw-accuracy-limit');
-const monthRangeFields = element<HTMLElement>('month-range-fields');
 const exactDateFields = element<HTMLElement>('exact-date-fields');
-const startSelect = element<HTMLSelectElement>('start-month');
-const endSelect = element<HTMLSelectElement>('end-month');
 const startDateInput = element<HTMLInputElement>('start-date');
 const endDateInput = element<HTMLInputElement>('end-date');
 const titleInput = element<HTMLInputElement>('video-title');
 const durationSelect = element<HTMLSelectElement>('duration');
 const cameraMovementSelect = element<HTMLSelectElement>('camera-movement');
 const selectionSummary = element<HTMLParagraphElement>('selection-summary');
-const mapConsent = element<HTMLInputElement>('map-consent');
 const settingsError = element<HTMLParagraphElement>('settings-error');
 const previewCard = element<HTMLElement>('preview-card');
 const canvas = element<HTMLCanvasElement>('journey-canvas');
@@ -84,6 +81,8 @@ let rawSignalPoints: RawSignalPoint[] = [];
 let rawSignalProcessing: RawSignalProcessingResult | null = null;
 let pendingRawOnlyImport: { data: unknown; sourceName: string } | null = null;
 let months: MonthOption[] = [];
+let rangeFirstDate = '';
+let rangeLastDate = '';
 let prepared: PreparedJourney | null = null;
 let selectedSignature = '';
 let resultUrl: string | null = null;
@@ -106,8 +105,42 @@ function setSettingsError(message: string | null): void {
   settingsError.classList.toggle('hidden', !message);
 }
 
-function populateMonths(select: HTMLSelectElement, options: MonthOption[]): void {
-  select.replaceChildren(...options.map(({ key, label }) => new Option(label, key)));
+const PRESET_LABEL: Record<RangePreset, string> = {
+  all: 'Tümü',
+  year: 'Son 1 yıl',
+  half: 'Son 6 ay',
+  custom: 'Özel aralık',
+};
+
+/**
+ * Eight years of months in two dropdowns asked the reader to scan a hundred
+ * options to say "all of it". The windows people actually pick are named instead,
+ * and the day pickers appear only for the one case the names cannot cover.
+ */
+function renderPresets(): void {
+  rangePresets.replaceChildren(...availablePresets(rangeFirstDate, rangeLastDate).map((preset) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip';
+    chip.dataset.range = preset;
+    chip.textContent = PRESET_LABEL[preset];
+    return chip;
+  }));
+}
+
+function applyPreset(preset: RangePreset): void {
+  for (const chip of rangePresets.querySelectorAll('.chip')) {
+    chip.classList.toggle('is-active', chip.getAttribute('data-range') === preset);
+  }
+  exactDateFields.classList.toggle('hidden', preset !== 'custom');
+  if (preset === 'custom') return;
+  const range = presetRange(preset, rangeFirstDate, rangeLastDate);
+  startDateInput.value = range.start;
+  endDateInput.value = range.end;
+}
+
+function markLoaded(input: HTMLInputElement, loaded: boolean): void {
+  input.closest('.file-button')?.classList.toggle('is-loaded', loaded);
 }
 
 function rebuildRawSignalProcessing(): boolean {
@@ -126,10 +159,7 @@ function currentPoints(): GeoPoint[] {
   if (rawSignalsToggle.checked) {
     return rebuildRawSignalProcessing() ? rawSignalProcessing?.points ?? [] : [];
   }
-  if (exactDateToggle.checked) {
-    return selectDateRange(semanticPoints, startDateInput.value, endDateInput.value);
-  }
-  return selectRange(semanticPoints, startSelect.value, endSelect.value);
+  return selectDateRange(semanticPoints, startDateInput.value, endDateInput.value);
 }
 
 function formatInputDate(value: string): string {
@@ -139,21 +169,14 @@ function formatInputDate(value: string): string {
 
 function currentPeriodLabel(): string {
   if (rawSignalsToggle.checked) return 'Raw location data';
-  if (exactDateToggle.checked) {
-    const start = formatInputDate(startDateInput.value);
-    const end = formatInputDate(endDateInput.value);
-    return startDateInput.value === endDateInput.value ? start : `${start} – ${end}`;
-  }
-  const start = months.find((month) => month.key === startSelect.value)?.label ?? startSelect.value;
-  const end = months.find((month) => month.key === endSelect.value)?.label ?? endSelect.value;
-  return startSelect.value === endSelect.value ? start : `${start} – ${end}`;
+  const start = formatInputDate(startDateInput.value);
+  const end = formatInputDate(endDateInput.value);
+  return startDateInput.value === endDateInput.value ? start : `${start} – ${end}`;
 }
 
 function currentRangeSignature(): string {
   if (rawSignalsToggle.checked) return `raw:${rawAccuracyLimit.value.trim()}`;
-  return exactDateToggle.checked
-    ? `dates:${startDateInput.value}:${endDateInput.value}`
-    : `months:${startSelect.value}:${endSelect.value}`;
+  return `dates:${startDateInput.value}:${endDateInput.value}`;
 }
 
 function selectedDistanceKm(points: GeoPoint[]): number {
@@ -193,10 +216,8 @@ function applySuggestedDuration(points: GeoPoint[]): void {
 function updateSelection(): void {
   cancelAnimationFrame(previewAnimation);
   setSettingsError(null);
-  if (!rawSignalsToggle.checked && exactDateToggle.checked) {
-    if (startDateInput.value > endDateInput.value) endDateInput.value = startDateInput.value;
-  } else if (!rawSignalsToggle.checked && startSelect.value > endSelect.value) {
-    endSelect.value = startSelect.value;
+  if (!rawSignalsToggle.checked && startDateInput.value > endDateInput.value) {
+    endDateInput.value = startDateInput.value;
   }
 
   const points = currentPoints();
@@ -244,13 +265,6 @@ async function getPreparedJourney(signal?: AbortSignal): Promise<PreparedJourney
   return nextJourney;
 }
 
-function requireMapConsent(): boolean {
-  if (mapConsent.checked) return true;
-  setSettingsError('Devam etmek için harita görsellerini indirmeyi onayla.');
-  mapConsent.focus();
-  return false;
-}
-
 function parseTimelineText(text: string): unknown {
   try {
     return JSON.parse(text) as unknown;
@@ -282,10 +296,6 @@ function adoptPoints(): void {
     throw new TimelineParseError('no-usable-locations', 'Bu dosyada kullanılabilir konum noktası yok.');
   }
   months = availableMonths(allPoints);
-  populateMonths(startSelect, months);
-  populateMonths(endSelect, months);
-  startSelect.value = months[0].key;
-  endSelect.value = months.at(-1)?.key ?? months[0].key;
   const dateKeys = allPoints.map(pointDateKey).sort();
   const firstDate = dateKeys[0] ?? localDateKey(allPoints[0].instant);
   const lastDate = dateKeys.at(-1) ?? firstDate;
@@ -293,18 +303,18 @@ function adoptPoints(): void {
   startDateInput.max = lastDate;
   endDateInput.min = firstDate;
   endDateInput.max = lastDate;
-  startDateInput.value = firstDate;
-  endDateInput.value = lastDate;
-  exactDateToggle.checked = false;
+  rangeFirstDate = firstDate;
+  rangeLastDate = lastDate;
+  renderPresets();
+  applyPreset('all');
+  markLoaded(fileInput, timelinePoints.length > 0);
+  markLoaded(instagramFile, sharePoints.length > 0);
   durationChosenByHand = false;
   rawSignalsToggle.checked = useRawOnly;
   rawSignalsRow.classList.toggle('hidden', useRawOnly || rawSignalPoints.length === 0);
   rawSignalsDescription.classList.toggle('hidden', !useRawOnly);
   rawAccuracyField.classList.toggle('hidden', !useRawOnly);
   periodControls.classList.toggle('hidden', useRawOnly);
-  monthRangeFields.classList.remove('hidden');
-  exactDateFields.classList.add('hidden');
-  mapConsent.checked = false;
   settingsCard.classList.remove('hidden');
   previewCard.classList.add('hidden');
   const timezoneNote = allPoints.some((point) => point.timeZoneMissing)
@@ -415,8 +425,12 @@ sampleButton.addEventListener('click', async () => {
   }
 });
 
-startSelect.addEventListener('change', updateSelection);
-endSelect.addEventListener('change', updateSelection);
+rangePresets.addEventListener('click', (event) => {
+  const chip = (event.target as HTMLElement).closest<HTMLButtonElement>('.chip');
+  if (!chip?.dataset.range) return;
+  applyPreset(chip.dataset.range as RangePreset);
+  updateSelection();
+});
 startDateInput.addEventListener('change', updateSelection);
 endDateInput.addEventListener('change', updateSelection);
 durationSelect.addEventListener('change', () => {
@@ -424,11 +438,6 @@ durationSelect.addEventListener('change', () => {
   updateSelection();
 });
 cameraMovementSelect.addEventListener('change', updateSelection);
-exactDateToggle.addEventListener('change', () => {
-  monthRangeFields.classList.toggle('hidden', exactDateToggle.checked);
-  exactDateFields.classList.toggle('hidden', !exactDateToggle.checked);
-  updateSelection();
-});
 rawSignalsToggle.addEventListener('change', () => {
   periodControls.classList.toggle('hidden', rawSignalsToggle.checked);
   rawSignalsDescription.classList.toggle('hidden', !rawSignalsToggle.checked);
@@ -436,10 +445,6 @@ rawSignalsToggle.addEventListener('change', () => {
   updateSelection();
 });
 rawAccuracyLimit.addEventListener('input', updateSelection);
-mapConsent.addEventListener('change', () => {
-  if (mapConsent.checked) setSettingsError(null);
-});
-
 openGoogleMapsButton.addEventListener('click', () => {
   window.open('https://www.google.com/maps', '_blank', 'noopener');
   pendingRawOnlyImport = null;
@@ -470,7 +475,6 @@ rawOnlyDialog.addEventListener('cancel', () => {
 });
 
 previewButton.addEventListener('click', async () => {
-  if (!requireMapConsent()) return;
   cancelAnimationFrame(previewAnimation);
   setError(null);
   resultActions.classList.add('hidden');
@@ -513,7 +517,6 @@ cancelButton.addEventListener('click', () => {
 });
 
 createButton.addEventListener('click', async () => {
-  if (!requireMapConsent()) return;
   cancelAnimationFrame(previewAnimation);
   setError(null);
   resultActions.classList.add('hidden');

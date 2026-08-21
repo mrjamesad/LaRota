@@ -12,6 +12,8 @@
   --accent: #22d3ee;
   --accent-ink: #04222a;
   --accent-soft: rgba(34, 211, 238, 0.12);
+  --ok: #34d399;
+  --ok-ink: #04261b;
   --danger: #ff8a8a;
 
   color: var(--ink);
@@ -184,6 +186,10 @@ button:disabled { cursor: not-allowed; opacity: 0.35; }
 .source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; align-items: start; }
 .source-grid .file-button { margin-top: 0; padding-inline: 12px; text-align: center; }
 .source-slot .status { margin-top: 10px; }
+
+/* Both files can be loaded at once, so each button carries its own filled state. */
+.file-button.is-loaded { background: var(--ok); color: var(--ok-ink); }
+.file-button.is-loaded span::before { content: "✓ "; }
 .source-actions button { width: 100%; }
 
 label {
@@ -221,6 +227,28 @@ input:focus-visible, select:focus-visible, button:focus-visible, .file-button:fo
   font-size: 12px;
   font-weight: 500;
   line-height: 1.45;
+}
+
+#period-controls { margin-top: 20px; }
+#period-controls > .field-label { display: block; }
+
+.range-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+
+.chip {
+  min-height: 38px;
+  padding: 8px 15px;
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chip.is-active {
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: none;
 }
 
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -264,16 +292,13 @@ input:focus-visible, select:focus-visible, button:focus-visible, .file-button:fo
 
 .privacy-notice {
   margin-top: 20px;
-  padding: 4px 14px 14px;
+  padding: 13px 15px;
   border: 1px solid var(--line);
   border-radius: 13px;
   background: var(--surface-raised);
-}
-
-.privacy-notice p {
-  margin: 2px 0 0;
   color: var(--ink-faint);
   font-size: 12px;
+  line-height: 1.5;
 }
 
 .cancel-button { width: 100%; margin-top: 10px; }

@@ -8,7 +8,6 @@ import {
   pointDateKey,
   processRawSignals,
   selectDateRange,
-  selectRange,
   TimelineParseError,
 } from './timeline';
 
@@ -153,13 +152,12 @@ describe('parseTimelineJson', () => {
     expect(points[1].instant.toISOString()).toBe('2026-01-01T00:30:00.000Z');
   });
 
-  it('sorts, deduplicates, lists months, and selects a month range', () => {
+  it('sorts, deduplicates and lists the months it covers', () => {
     const duplicate = { ...directExport[0] };
     const points = parseTimelineJson([directExport[1], directExport[0], duplicate]);
     expect(points).toHaveLength(3);
     expect(points[0].instant.toISOString()).toBe('2025-01-10T00:00:00.000Z');
     expect(availableMonths(points).map((month) => month.key)).toEqual(['2025-01', '2025-03']);
-    expect(selectRange(points, '2025-03', '2025-03')).toHaveLength(1);
   });
 
   it('preserves export order when timezone-less wall times cross the date line', () => {

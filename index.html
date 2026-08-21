@@ -81,20 +81,8 @@
         </label>
 
         <div id="period-controls">
-          <label class="checkbox-row">
-            <input id="exact-date-toggle" type="checkbox" />
-            <span>Gün gün seç</span>
-          </label>
-          <div id="month-range-fields" class="field-grid">
-            <label>
-              <span class="field-label">Başlangıç</span>
-              <select id="start-month"></select>
-            </label>
-            <label>
-              <span class="field-label">Bitiş</span>
-              <select id="end-month"></select>
-            </label>
-          </div>
+          <span class="field-label">Tarih aralığı</span>
+          <div id="range-presets" class="range-presets" role="group" aria-label="Tarih aralığı"></div>
           <div id="exact-date-fields" class="field-grid hidden">
             <label>
               <span class="field-label">İlk gün</span>
@@ -109,7 +97,7 @@
 
         <label>
           <span class="field-label">Video başlığı</span>
-          <input id="video-title" type="text" maxlength="80" value="2018–2026 My Timeline" />
+          <input id="video-title" type="text" maxlength="80" value="My Timeline" />
         </label>
 
         <div class="field-grid">
@@ -139,13 +127,7 @@
 
         <p id="selection-summary" class="summary"></p>
 
-        <div class="privacy-notice">
-          <label class="checkbox-row">
-            <input id="map-consent" type="checkbox" />
-            <span>Harita görsellerini indir</span>
-          </label>
-          <p>Seçtiğin rotanın geçtiği bölgeler için harita karoları indirilecek. Konum dosyan hiçbir yere gönderilmiyor.</p>
-        </div>
+        <p class="privacy-notice">Rotanın geçtiği bölgeler için OpenStreetMap harita karoları indirilir. Konum dosyaların bu cihazdan çıkmaz, hiçbir yere gönderilmez ve hiçbir yerde saklanmaz.</p>
 
         <p id="settings-error" class="error hidden" role="alert"></p>
         <div class="actions">

@@ -432,13 +432,6 @@ export function availableMonths(points: GeoPoint[]): MonthOption[] {
   });
 }
 
-export function selectRange(points: GeoPoint[], startMonth: string, endMonth: string): GeoPoint[] {
-  return points.filter((point) => {
-    const key = pointMonthKey(point);
-    return key >= startMonth && key <= endMonth;
-  });
-}
-
 export function localDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
